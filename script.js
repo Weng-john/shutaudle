@@ -6,19 +6,71 @@ const guessGrid = document.querySelector("[data-guess-grid]")
 const offsetFromDate = new Date(2022, 0, 1)
 const msOffset = Date.now() - offsetFromDate
 const dayOffset = msOffset / 1000 / 60 / 60 / 24
-const targetWord = targetWords[Math.floor(dayOffset)]
+const targetWord =  targetWords[Math.floor(dayOffset)]//"ifindyou"
 const WORD_LENGTH = targetWord.length;
+var allCookies= document.cookie;
+var row= cookieLength()+1;
 
-startInteraction()
+if(row!==1)
+    setGuess();
+else
+    startInteraction();
+
+function setGuess(){
+    var preGuess= readCookie();
+   // var test= {"0": "crane", "1": "wrong"};
+    var key= Object.keys(preGuess);
+    for(var i=0;i<key.length;i++){
+        var str= preGuess[key[i]].split("");
+        str.forEach(element => pressKey(element));
+        submitGuess(true);
+    }
+}
+
+function cookieLength(){
+    var curCookie= readCookie();
+    var cookieLen= 0;
+    if(curCookie.length!= undefined)
+        cookieLen= curCookie.length;
+    return cookieLen;
+}
+
+function readCookie(){
+    var cookieObj = {};
+    var cookieAry = document.cookie.split(';');
+    var cookie;
+    
+    for (var i=0, l=cookieAry.length; i<l; ++i) {
+        cookie = jQuery.trim(cookieAry[i]);
+        cookie = cookie.split('=');
+        cookieObj[cookie[0]] = cookie[1];
+    }
+    return cookieObj;
+}
+
+function setCookie(guess){
+    var time= new Date();
+    var hh= time.getHours();
+    var mm= time.getMinutes();
+    var ss= time.getSeconds();
+    var now= (hh*60+mm)*60+ss;
+    var cookieLen= cookieLength();
+    var curCookie= cookieLen + "=" + guess + ";";
+    document.cookie= curCookie;// max-age=" + (86400-now);
+    console.log( cookieLen + "=" + guess + "; max-age=" + (86400-now));
+}
 
 function startInteraction() {
-  document.addEventListener("click", handleMouseClick)
-  document.addEventListener("keydown", handleKeyPress)
+    document.addEventListener("click", handleMouseClick)
+    document.addEventListener("keydown", handleKeyPress)
+    console.log("start");
+    //var 
 }
 
 function stopInteraction() {
-  document.removeEventListener("click", handleMouseClick)
-  document.removeEventListener("keydown", handleKeyPress)
+    document.removeEventListener("click", handleMouseClick)
+    document.removeEventListener("keydown", handleKeyPress)
+    console.log("stop");
 }
 
 function handleMouseClick(e) {
@@ -28,7 +80,7 @@ function handleMouseClick(e) {
   }
 
   if (e.target.matches("[data-enter]")) {
-    submitGuess()
+    submitGuess(false)
     return
   }
 
@@ -40,7 +92,7 @@ function handleMouseClick(e) {
 
 function handleKeyPress(e) {
   if (e.key === "Enter") {
-    submitGuess()
+    submitGuess(false)
     return
   }
 
@@ -56,6 +108,7 @@ function handleKeyPress(e) {
 }
 
 function pressKey(key) {
+    console.log(key)
   const activeTiles = getActiveTiles()
   if (activeTiles.length >= WORD_LENGTH) return
   const nextTile = guessGrid.querySelector(":not([data-letter])")
@@ -73,7 +126,8 @@ function deleteKey() {
   delete lastTile.dataset.letter
 }
 
-function submitGuess() {
+function submitGuess(isByCookie) {
+    console.log("enter")
   const activeTiles = [...getActiveTiles()]
   if (activeTiles.length !== WORD_LENGTH) {
     showAlert("Not enough letters")
@@ -85,17 +139,21 @@ function submitGuess() {
     return word + tile.dataset.letter
   }, "")
 
-  if (!dictionary.includes(guess)) {
-    showAlert("Not in word list")
-    shakeTiles(activeTiles)
-    return
-  }
+  if(!isByCookie){
+      if (!dictionary.includes(guess)) {
+          showAlert("Not in word list")
+          shakeTiles(activeTiles)
+          return
+      }
 
-  stopInteraction()
-  activeTiles.forEach((...params) => flipTile(...params, guess))
+      setCookie(guess);
+  }
+    stopInteraction()
+    activeTiles.forEach((...params) => flipTile(...params, guess))
 }
 
 function flipTile(tile, index, array, guess) {
+    console.log("flip")
   const letter = tile.dataset.letter
   const key = keyboard.querySelector(`[data-key="${letter}"i]`)
   setTimeout(() => {
